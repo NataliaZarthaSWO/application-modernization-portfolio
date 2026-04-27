@@ -1,0 +1,309 @@
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+import javax.jws.soap.SOAPBinding.Style;
+
+// Define the web service
+@WebService
+@SOAPBinding(style = Style.RPC)
+public class CalculatorService {
+
+    // Define the web service operation
+    @WebMethod
+    public int add(int a, int b) {
+        return a + b;
+    }
+
+    // Define another web service operation
+    @WebMethod
+    public int subtract(int a, int b) {
+        return a - b;
+    }
+}
+
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+import javax.jws.soap.SOAPBinding.Style;
+
+@WebService
+@SOAPBinding(style = Style.RPC)
+public class CalculatorService {
+
+    // Define the web service operation
+    @WebMethod
+    public int add(int a, int b) {
+        // Load the Oracle JDBC driver
+        try {
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException("Error loading Oracle JDBC driver.", ex);
+        }
+
+        // Establish a connection to the Oracle database
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection("jdbc:oracle:thin:@host:1521:database", "username", "password");
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error connecting to Oracle database.", ex);
+        }
+
+        // Call the Oracle stored procedure
+        CallableStatement stmt = null;
+        try {
+            stmt = conn.prepareCall("{ call add_numbers(?, ?, ?) }");
+            stmt.setInt(1, a);
+            stmt.setInt(2, b);
+            stmt.registerOutParameter(3, java.sql.Types.INTEGER);
+            stmt.execute();
+            return stmt.getInt(3);
+        }
+
+
+/*Oracle JDBC Driver*/
+
+// Import the JDBC API classes
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+
+// Import the JAX-WS API classes
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+
+@WebService
+public class OracleStoredProcedure {
+
+    // Define the JDBC driver and database URL
+    static final String JDBC_DRIVER = "oracle.jdbc.driver.OracleDriver";
+    static final String DB_URL = "jdbc:oracle:thin:@host:port:database";
+
+    // Define the database credentials
+    static final String USER = "username";
+    static final String PASS = "password";
+
+    // Define the name of the stored procedure
+    static final String PROCEDURE_NAME = "my_stored_procedure";
+
+    @WebMethod
+    public void callOracleStoredProcedure() {
+        Connection conn = null;
+        CallableStatement stmt = null;
+        ResultSet
+
+/*PostgreSQL JDBC Driver*/
+
+// Import the JDBC API classes
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+
+// Import the JAX-WS API classes
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+
+@WebService
+public class PostgreSQLStoredProcedure {
+
+    // Define the JDBC driver and database URL
+    static final String JDBC_DRIVER = "org.postgresql.Driver";
+    static final String DB_URL = "jdbc:postgresql://host:port/database";
+
+    // Define the database credentials
+    static final String USER = "username";
+    static final String PASS = "password";
+
+    // Define the name of the stored procedure
+    static final String PROCEDURE_NAME = "my_stored_procedure";
+
+    @WebMethod
+    public void callPostgreSQLStoredProcedure() {
+        Connection conn = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Register the JDBC driver
+            Class.forName(JDBC_DRIVER);
+
+            // Open a connection to the database
+            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+
+            // Create a callable statement to call the stored procedure
+            stmt = conn.prepareCall("{call " + PROCEDURE_NAME + "}");
+
+            // Set the input and output parameters for the stored procedure
+            stmt.registerOutParameter(1, java.sql.Types.INTEGER);
+            stmt.
+
+    #!/usr/bin/env python
+
+    #!/usr/bin/env python
+
+    import re
+    import sys
+
+    # Define the regular expression pattern to match the keyword
+    pattern = re.compile(r"\boracle\.jdbc\.driver\.OracleDriver\b")
+
+    # Read the input files from the command-line arguments
+    for filename in sys.argv[1:]:
+        # Open the file
+        with open(filename, "r") as f:
+            # Read the file content
+            content = f.read()
+
+            # Search for the matches in the content
+            for match in pattern.finditer(content):
+                # Print the line number and the matched keyword
+                print(f"{filename}:{match.start()}:{match.group()}")
+
+
+#!/usr/bin/env python
+
+import csv
+import re
+import sys
+
+# Check if a keyword, a CSV file, and an output file were provided as command-line arguments
+if len(sys.argv) < 4:
+    print("Usage: search.py keyword file.csv output.csv")
+    sys.exit(1)
+
+# Get the keyword, the CSV file, and the output file from the command-line arguments
+keyword = sys.argv[1]
+csv_file = sys.argv[2]
+output_file = sys.argv[3]
+
+# Define the regular expression pattern to match the keyword
+pattern = re.compile(rf"\b{keyword}\b")
+
+# Open the CSV file
+with open(csv_file, "r") as f:
+    # Read the CSV file as a dictionary
+    reader = csv.DictReader(f)
+
+    # Open the output file
+    with open(output_file, "w") as f:
+        # Create a writer object to write the output to the file
+        writer = csv.writer(f)
+
+        # Iterate over the rows in the CSV file
+        for row in reader:
+            # Get the file name from the row
+            filename = row["file"]
+
+            # Open the file
+            with open(filename, "r") as f:
+                # Read the file content
+                content = f.read()
+
+                # Search for the matches in the content
+                for match in pattern.finditer(content):
+                    # Get the matched text
+                    text = content[match.start():match.end()]
+
+                    # Write the file name, the line number, and the matched text to the output file
+                    writer.writerow([filename, match.start(), text])
+
+python search.py pbd files.csv output.csv
+
+#!/usr/bin/env python
+
+import csv
+import re
+import sys
+
+# Check if keywords and a CSV file were provided as command-line arguments
+if len(sys.argv) < 3:
+    print("Usage: search.py keyword1 keyword2 ... keywordN file.csv")
+    sys.exit(1)
+
+# Get the keywords and the CSV file from the command-line arguments
+keywords = sys.argv[1:-1]
+csv_file = sys.argv[-1]
+
+# Define the regular expression pattern to match any of the keywords
+pattern = re.compile(rf"\b({'|'.join(keywords)})\b")
+
+# Open the CSV file
+with open(csv_file, "r") as f:
+    # Read the CSV file as a dictionary
+    reader = csv.DictReader(f)
+
+    # Iterate over the rows in the CSV file
+    for row in reader:
+        # Get the file name from the row
+        filename = row["file"]
+
+        # Open the file
+        with open(filename, "r") as f:
+            # Read the file content
+            content = f.read()
+
+            # Search for the matches in the content
+            for match in pattern.finditer(content):
+                # Get the matched text
+                text = content[match.start():match.end()]
+
+                # Print the file name, the line number, and the matched text
+                print(f"{filename}:{match.start()}:{text}")
+#!/usr/bin/env python
+
+import csv
+import re
+import sys
+
+# Check if keywords, a CSV file, and an output file were provided as command-line arguments
+if len(sys.argv) < 4:
+    print("Usage: search.py keyword1 keyword2 ... keywordN file.csv output.csv")
+    sys.exit(1)
+
+# Get the keywords, the CSV file, and the output file from the command-line arguments
+keywords = sys.argv[1:-2]
+csv_file = sys.argv[-2]
+output_file = sys.argv[-1]
+
+# Define the regular expression pattern to match any of the keywords
+pattern = re.compile(rf"\b({'|'.join(keywords)})\b")
+
+# Open the CSV file
+with open(csv_file, "r") as f:
+    # Read the CSV file as a dictionary
+    reader = csv.DictReader(f)
+
+    # Open the output file
+    with open(output_file, "w") as f:
+        # Create a writer object to write the output to the file
+        writer = csv.writer(f)
+
+        # Iterate over the rows in the CSV file
+        for row in reader:
+            # Get the file name from the row
+            filename = row["file"]
+
+            # Open the file
+            with open(filename, "r") as f:
+                # Read the file content
+                content = f.read()
+
+                # Search for the matches in the content
+                for match in pattern.finditer(content):
+                    # Get the matched text
+                    text = content[match.start():match.end()]
+
+                    # Write the file name, the line number, and the matched text to the output file
+                    writer.writerow([filename, match.start(), text])
+
+
+python search.py keyword1 keyword2 ... keywordN file.csv
+
+
+
+

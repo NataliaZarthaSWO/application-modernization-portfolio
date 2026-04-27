@@ -1,0 +1,198 @@
+import sys
+import commentjson
+import csv
+import openpyxl
+import time
+from pathlib import Path
+
+executing_file_path = Path(sys.argv[0])
+configuration_file_path = str(executing_file_path.parent) + '\\config.json'
+
+if (not Path(configuration_file_path).is_file()):
+    raise Exception("config.json is missing")
+
+with open(configuration_file_path) as f:
+    config = commentjson.load(f)
+
+global_object_types = []
+global_input_folder = ""
+global_file_header = ""
+global_file_details = ""
+global_file_landscaping = ""
+global_output_folder = ""
+global_records = {}
+
+# Filter records from a CSV file
+def filter_records_database(database_name):
+    # Open the source CSV file
+    with open(global_file_landscaping) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter = ',')
+
+        # Create a new list to store the filtered rows
+        filtered_rows = []
+
+        # Set the values you want to filter by
+        headers = ['Instance Name', 'Database Version', 'Schema Owner', '# Jobs', '# Procedures', '# Functions', '# Views', '# Triggers', '# Temp Tables', '#DB Links', '# Part Tables', '# Functional Columns', '# M View', '# Java Classess',  '# ACLs']
+        
+        # Add the header row to the list
+        filtered_rows.append(headers)
+
+        # Loop through the rows of the CSV file
+        for row in csv_reader:
+            # Filter the rows based on a condition
+            if row[2] == database_name:
+                filtered_rows.append(row)
+
+    with safe_open_write(global_output_folder + '\\' + database_name + '\\filtered_db.csv') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter = ',')
+
+        # Write the filtered rows to the CSV file
+        csv_writer.writerows(filtered_rows)
+        
+# Read required config value
+def get_required_config_value(key):
+    if not config.get(key) or len(config.get(key)) == 0:
+        raise Exception("'" + key + "'" + " is not set in config.json")
+    else:
+        return config.get(key)
+
+# Open file for writing. Create file and parent directories if not exist
+def safe_open_write(path):
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+
+    return open(path, 'w', newline='')
+
+# Filter records from a CSV file
+def filter_records_header(database_name):
+    # Open the source CSV file
+    with open(global_file_header) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter = ',')
+
+        file_sct = global_input_folder + '\\' + 'SCT_' + database_name + '\\' + database_name + 'oraint.csv'
+        actions = count_actions(file_sct)
+        
+        # Create a new list to store the filtered rows
+        filtered_rows = []
+
+        headers = ['Type', 'Schema', 'Object Name', 'Object Type', 'Object Id', 'LoC', 'References', 'Dependencies', 'Abstraction', 'Instability', 'Simple Actions', 'Medium Actions', 'Complex Actions']
+        
+        # Add the header row to the list
+        filtered_rows.append(headers)
+
+        # Loop through the rows of the CSV file
+        for row in csv_reader:
+            # Filter the rows based on a condition
+            if row[3] in global_object_types and row[1] == database_name:
+                references = 0
+                dependencies = 0
+                
+                if row[4] in global_records:
+                    references = global_records[row[4]]['REF']
+                    dependencies = global_records[row[4]]['DEP']
+
+                abstraction = 0
+                instability = 0
+        
+                if row[5] != '0':
+                    abstraction = 1 / int(row[5])
+                
+                if references + dependencies > 0:
+                    instability = dependencies / (references + dependencies)
+
+                simple_actions = 0
+                medium_actions = 0
+                complex_actions = 0
+                
+                if row[2] in actions:
+                    simple_actions = actions[row[2]]['Simple']
+                    medium_actions = actions[row[2]]['Medium']
+                    complex_actions = actions[row[2]]['Complex']
+                
+                row.append(references)
+                row.append(dependencies)
+                row.append(abstraction)
+                row.append(instability)
+                row.append(simple_actions)
+                row.append(medium_actions)
+                row.append(complex_actions)
+                
+                filtered_rows.append(row) 
+
+        # Open the output CSV file
+        with safe_open_write(global_output_folder + '\\' + database_name + '\\filtered_header.csv') as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter = ',')
+
+            # Write the filtered rows to the CSV file
+            csv_writer.writerows(filtered_rows)
+
+# Count records
+def count_records(filename):
+    # Initialize result
+    result = {}
+    
+    # Open the CSV file
+    with open(filename) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter = ',')
+        # Loop through the rows of the CSV file
+        for row in csv_reader:
+            # Check if the third column contains the reference string
+            if row[2] in global_object_types and row[5] in global_object_types:
+                if not row[3] in result:
+                    # Initialize the counter
+                    result[row[3]] = { 'REF' : 0, 'DEP': 0}
+
+                # Increment the counter if the condition is met
+                if row[6] in result[row[3]]:
+                    result[row[3]][row[6]] += 1
+
+    # Return the result
+    return result
+
+# Count actions
+def count_actions(filename):
+    # Initialize result
+    result = {}
+
+    # Open the CSV file
+    with open(filename) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter = ',')
+
+        # Loop through the rows of the CSV file
+        for row in csv_reader:
+            object_name_parts = row[1].split(".Packages.")
+
+            object_name = ""
+
+            # Check if package           
+            if len(object_name_parts) == 2:
+                object_name = object_name_parts[1].split(".")[0]
+            else:
+                object_name = row[1].split(".")[-1]
+
+            if not object_name in result:
+                # Initialize the counter
+                result[object_name] = { 'Simple' : 0, 'Medium': 0, 'Complex': 0}
+                    
+            # Increment the counter if the condition is met
+            if row[9] in result[object_name]:
+                result[object_name][row[9]] += 1
+
+    # Return the result
+    return result
+
+# Main program
+if __name__ == '__main__':
+    global_object_types = get_required_config_value("object_types")
+    global_input_folder = get_required_config_value("input_folder")
+    global_file_header = global_input_folder + '\\' + 'assessment_header.csv'
+    global_file_details = global_input_folder + '\\' + 'assessment_details.csv'
+    global_file_landscaping = global_input_folder + '\\' + 'landscaping.csv'
+    global_output_folder = get_required_config_value("output_folder")
+
+    global_records = count_records(global_file_details)
+
+    for schema in get_required_config_value("schemas"):
+        filter_records_database(schema)
+        filter_records_header(schema)
+    

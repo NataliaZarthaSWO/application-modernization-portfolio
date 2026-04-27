@@ -1,0 +1,6 @@
+{
+	"schemas": ["TKMTS", "OPERATIVE", "MTS_ADMIN"],
+	"object_types": ["VIEW", "PROCEDURE", "PACKAGE", "MATERIALIZED VIEW", "PACKAGE BODY", "TRIGGER", "FUNCTION", "TYPE", "JAVA SOURCE", "JAVA CLASS"],
+	"input_folder": "c:\\ETL\\input",
+	"output_folder": "c:\\ETL\\output"
+}

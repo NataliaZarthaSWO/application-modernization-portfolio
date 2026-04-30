@@ -8,3 +8,6 @@ __pycache__/
 .github\.env
 
 .venv
+# Generated artifacts
+.tmp/
+output/
